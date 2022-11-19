@@ -252,6 +252,7 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
         self._cold_tolerance = cold_tolerance
         self._hot_tolerance = hot_tolerance
         self._hvac_mode = initial_hvac_mode
+        self._previous_hvac_mode = initial_hvac_mode
         self._last_hvac_mode = ''
         self._saved_target_temp = target_temp
         self._temp_precision = precision
@@ -369,6 +370,9 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
         # Set default state to off
         if not self._hvac_mode:
             self._hvac_mode = HVAC_MODE_OFF
+        
+        # previous mode
+        self._previous_hvac_mode = self._hvac_mode
                             
         # add heatbeat
         async_track_time_interval(self.hass, self._async_control_heating, timedelta(seconds=60))
@@ -452,18 +456,22 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
         if hvac_mode == HVAC_MODE_HEAT:
+            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_HEAT
             self.logger.info("set hvac mode to HEAT")
             await self._async_control_heating(force=True)
         elif hvac_mode == HVAC_MODE_COOL:
+            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_COOL
             self.logger.info("set hvac mode to COOL")
             await self._async_control_heating(force=True)
         elif hvac_mode == HVAC_MODE_AUTO:
+            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_AUTO
             self.logger.info("set hvac mode to AUTO")
             await self._async_control_heating(force=True)
         elif hvac_mode == HVAC_MODE_OFF:
+            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_OFF
             self.logger.info("set hvac mode to OFF")
             if self._is_device_active:
@@ -575,8 +583,8 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
                         self.forced = False
                         self.endheat = now
                         self.logger.debug("Forced mode Off !")
-                        await self.async_set_hvac_mode(HVAC_MODE_AUTO)
                         await self._async_heater_turn_off()
+                        self.hass.async_create_task(self.async_set_hvac_mode(self._previous_hvac_mode))
                 else:
                     self.forced = True
                     self.endheat = now + timedelta(minutes=self.forcedduration)
