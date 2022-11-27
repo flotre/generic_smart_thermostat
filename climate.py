@@ -273,7 +273,7 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
         self.nextupdate = self.endheat
         self.nexttemps = self.endheat
         self.forced = False
-        self.forcedduration = 60  # time in minutes for the forced mode
+        self.forcedduration = 120  # time in minutes for the forced mode
         self.heat = False
         # pause
         self.pauseondelay = 2  # time between pause sensor actuation and actual pause
@@ -456,17 +456,14 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
         if hvac_mode == HVAC_MODE_HEAT:
-            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_HEAT
             self.logger.info("set hvac mode to HEAT")
             await self._async_control_heating(force=True)
         elif hvac_mode == HVAC_MODE_COOL:
-            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_COOL
             self.logger.info("set hvac mode to COOL")
             await self._async_control_heating(force=True)
         elif hvac_mode == HVAC_MODE_AUTO:
-            self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_AUTO
             self.logger.info("set hvac mode to AUTO")
             await self._async_control_heating(force=True)
