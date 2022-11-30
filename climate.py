@@ -456,7 +456,9 @@ class GenericSmartThermostat(ClimateEntity, RestoreEntity):
     async def async_set_hvac_mode(self, hvac_mode):
         """Set hvac mode."""
         if hvac_mode == HVAC_MODE_HEAT:
-            self._previous_hvac_mode = self._hvac_mode
+            # store mode before heating to restore it after
+            if self._hvac_mode != HVAC_MODE_HEAT:
+                self._previous_hvac_mode = self._hvac_mode
             self._hvac_mode = HVAC_MODE_HEAT
             self.logger.info("set hvac mode to HEAT")
             await self._async_control_heating(force=True)
